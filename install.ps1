@@ -20,14 +20,16 @@ if (-not [Environment]::Is64BitOperatingSystem) {
     throw "Transfigure requires 64-bit Windows."
 }
 
-$ArchitectureValue = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture
-if ($null -eq $ArchitectureValue) {
-    throw "Could not determine the Windows CPU architecture."
+$Architecture = [string] [Environment]::GetEnvironmentVariable("PROCESSOR_ARCHITEW6432", "Process")
+if ([string]::IsNullOrWhiteSpace($Architecture)) {
+    $Architecture = [string] [Environment]::GetEnvironmentVariable("PROCESSOR_ARCHITECTURE", "Process")
 }
-$Architecture = [string] $ArchitectureValue
+if ([string]::IsNullOrWhiteSpace($Architecture)) {
+    $Architecture = [string] [Environment]::GetEnvironmentVariable("PROCESSOR_ARCHITECTURE", "Machine")
+}
 switch ($Architecture) {
-    "X64" { $Target = "x86_64-pc-windows-msvc" }
-    "Arm64" { $Target = "aarch64-pc-windows-msvc" }
+    { $_ -match '^(AMD64|X86_64|X64)$' } { $Target = "x86_64-pc-windows-msvc"; break }
+    { $_ -match '^(ARM64|AARCH64)$' } { $Target = "aarch64-pc-windows-msvc"; break }
     default { throw "Unsupported CPU architecture: $Architecture" }
 }
 

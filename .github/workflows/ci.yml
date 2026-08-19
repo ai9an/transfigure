@@ -38,6 +38,7 @@ jobs:
           $InstallDir = $null
           $env:TRANSFIGURE_VERSION = "invalid-test-version"
           $env:TRANSFIGURE_INSTALL_DIR = Join-Path $env:RUNNER_TEMP "transfigure-installer-test"
+          $env:PROCESSOR_ARCHITECTURE = "AMD64"
           try {
             $failure = $null
             try { Get-Content -Raw install.ps1 | Invoke-Expression } catch { $failure = $_ }
@@ -51,6 +52,7 @@ jobs:
           } finally {
             Remove-Item Env:TRANSFIGURE_VERSION -ErrorAction SilentlyContinue
             Remove-Item Env:TRANSFIGURE_INSTALL_DIR -ErrorAction SilentlyContinue
+            Remove-Item Env:PROCESSOR_ARCHITECTURE -ErrorAction SilentlyContinue
           }
       - name: Check installer defaults
         shell: pwsh
