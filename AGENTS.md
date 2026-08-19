@@ -29,7 +29,7 @@ The main modules are:
 - Verify release archives against `SHA256SUMS` before extraction or replacement.
 - PATH changes must be idempotent. On Linux, write only the clearly marked Transfigure block; on Windows, preserve existing user PATH entries.
 - Installer tests and manual experiments must set `TRANSFIGURE_INSTALL_DIR` and `TRANSFIGURE_SKIP_PATH=1` so they cannot modify a real profile or user PATH.
-- Source installer files contain `__TRANSFIGURE_REPOSITORY__`; the release workflow replaces it in published copies. Do not hardcode a personal fork in source.
+- Checked-in installers default to `ai9an/transfigure` and are directly runnable from GitHub's raw text endpoint. Forks can set `TRANSFIGURE_REPOSITORY`; keep the release and source copies behaviorally identical.
 
 ## Working practices
 

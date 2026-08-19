@@ -31,13 +31,10 @@ jobs:
       - run: sh -n install.sh
       - shell: pwsh
         run: '[scriptblock]::Create((Get-Content -Raw install.ps1)) | Out-Null'
-      - name: Check rendered installer guards
+      - name: Check installer defaults
         shell: pwsh
         run: |
-          $repo = "example/transfigure"
-          $ps = (Get-Content -Raw install.ps1).Replace("__TRANSFIGURE_REPOSITORY__", $repo)
-          $sh = (Get-Content -Raw install.sh).Replace("__TRANSFIGURE_REPOSITORY__", $repo)
-          if ($ps.Contains("__TRANSFIGURE_REPOSITORY__") -or $sh.Contains("__TRANSFIGURE_REPOSITORY__")) { throw "Unrendered repository token" }
-          if ($ps.Contains('if ($Repository -eq "example/transfigure")')) { throw "PowerShell guard was rendered true" }
-          if ($sh.Contains('if [ "$REPOSITORY" = "example/transfigure" ]')) { throw "POSIX guard was rendered true" }
-          [scriptblock]::Create($ps) | Out-Null
+          $ps = Get-Content -Raw install.ps1
+          $sh = Get-Content -Raw install.sh
+          if (-not $ps.Contains('"ai9an/transfigure"')) { throw "Missing PowerShell repository default" }
+          if (-not $sh.Contains('ai9an/transfigure')) { throw "Missing POSIX repository default" }

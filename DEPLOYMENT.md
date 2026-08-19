@@ -9,7 +9,7 @@ This guide starts with the current project folder on Windows and ends with verif
 3. Commit and push `main`; the CI workflow tests Windows and Linux.
 4. Make sure the version in `Cargo.toml` is correct.
 5. Push a matching `vX.Y.Z` tag.
-6. The release workflow builds four archives, creates the two repository-specific installers and `SHA256SUMS`, and publishes a GitHub Release.
+6. The release workflow builds four archives, includes both installer scripts and `SHA256SUMS`, and publishes a GitHub Release.
 7. Test the published installers in isolated directories before advertising the normal install commands.
 
 Do not upload locally built executables by hand. The tag-triggered workflow is the reproducible source of release assets.
@@ -76,11 +76,11 @@ cargo clippy --all-targets --all-features -- -D warnings
 cargo test --all-targets --all-features
 ```
 
-Do not run the source installers directly. They are templates; the release workflow replaces `__TRANSFIGURE_REPOSITORY__` in the published copies.
+The checked-in installers are live bootstraps for `ai9an/transfigure`. Forks can target another repository with `TRANSFIGURE_REPOSITORY`.
 
 ## 3. Prepare the repository
 
-Replace `<OWNER>` in `README.md` with the GitHub user or organization that will own the repository. Confirm the release version:
+Confirm the release version:
 
 ```powershell
 Select-String -Path Cargo.toml -Pattern '^version'
@@ -175,7 +175,10 @@ $Owner = "OWNER"
 $InstallTest = Join-Path $env:TEMP ("transfigure-install-" + [guid]::NewGuid().ToString("N"))
 $env:TRANSFIGURE_INSTALL_DIR = Join-Path $InstallTest "bin"
 $env:TRANSFIGURE_SKIP_PATH = "1"
-irm "https://github.com/$Owner/transfigure/releases/latest/download/install.ps1" | iex
+New-Item -ItemType Directory -Force -Path $InstallTest | Out-Null
+$Installer = Join-Path $InstallTest "install.ps1"
+irm "https://github.com/$Owner/transfigure/releases/latest/download/install.ps1" -OutFile $Installer
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File $Installer
 & "$env:TRANSFIGURE_INSTALL_DIR\transfigure.exe" --version
 Remove-Item Env:TRANSFIGURE_INSTALL_DIR
 Remove-Item Env:TRANSFIGURE_SKIP_PATH
@@ -184,7 +187,7 @@ Remove-Item Env:TRANSFIGURE_SKIP_PATH
 Confirm it prints `transfigure 0.1.1`. Then test the real per-user installation:
 
 ```powershell
-irm https://github.com/OWNER/transfigure/releases/latest/download/install.ps1 | iex
+irm https://raw.githubusercontent.com/ai9an/transfigure/main/install.ps1 | iex
 ```
 
 Open a new terminal and run `transfigure --version` plus the `hello` smoke test. The normal installer updates only user PATH and does not require elevation.
@@ -208,7 +211,7 @@ Confirm it prints `transfigure 0.1.1`. Then test the normal installation:
 
 ```sh
 curl --proto '=https' --tlsv1.2 -fsSL \
-  https://github.com/OWNER/transfigure/releases/latest/download/install.sh | sh
+  https://raw.githubusercontent.com/ai9an/transfigure/main/install.sh | sh
 ```
 
 Open a new shell, run `transfigure --version`, and perform a create/run/remove test with a Linux program such as `printf`.
@@ -230,7 +233,7 @@ If a published release is bad, fix it and issue a new patch version rather than 
 
 ## Troubleshooting
 
-- **Installer returns 404:** wait for the Release workflow and ensure the release is published, not draft. Do not use the raw source-template URL.
+- **Installer returns 404:** ensure the repository is public, the Release workflow completed, and the release is published rather than draft.
 - **Release fails immediately:** ensure the tag matches `Cargo.toml`, with the leading `v` only on the tag.
 - **Release upload returns 403:** inspect repository and organization Actions permissions for the workflow token.
 - **ARM64 Windows job is unavailable:** inspect GitHub's runner-status message because `windows-11-arm` is public preview. Do not publish an incomplete release without intentionally changing the supported-target policy.

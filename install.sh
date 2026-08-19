@@ -1,8 +1,8 @@
 #!/bin/sh
-# GitHub Actions makes this installer repository-specific before publishing it.
+# Transfigure installer for Linux.
 set -eu
 
-REPOSITORY="__TRANSFIGURE_REPOSITORY__"
+REPOSITORY="${TRANSFIGURE_REPOSITORY:-ai9an/transfigure}"
 VERSION="${TRANSFIGURE_VERSION:-latest}"
 INSTALL_DIR="${TRANSFIGURE_INSTALL_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/transfigure/bin}"
 MODIFY_PATH=1
@@ -38,11 +38,6 @@ while [ "$#" -gt 0 ]; do
             ;;
     esac
 done
-
-if [ "$REPOSITORY" = "__TRANSFIGURE_""REPOSITORY__" ]; then
-    echo "This is the source installer template. Download install.sh from a GitHub Release." >&2
-    exit 1
-fi
 
 command -v curl >/dev/null 2>&1 || { echo "curl is required." >&2; exit 1; }
 command -v tar >/dev/null 2>&1 || { echo "tar is required." >&2; exit 1; }

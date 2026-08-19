@@ -4,18 +4,20 @@ Transfigure turns long commands into short commands that still accept arguments.
 
 ## Install
 
-Release installers are generated with the correct repository URL when a version tag is published. Replace `<OWNER>` below with the GitHub owner after the repository is created.
+Release installers are generated with the correct repository URL when a version tag is published.
 
 PowerShell on Windows:
 
 ```powershell
-irm https://github.com/ai9an/transfigure/releases/latest/download/install.ps1 | iex
+irm https://raw.githubusercontent.com/ai9an/transfigure/main/install.ps1 | iex
 ```
+
+The text bootstrap downloads the latest Windows release archive, verifies its checksum, and installs it for the current user.
 
 POSIX shell on Linux:
 
 ```sh
-curl --proto '=https' --tlsv1.2 -fsSL https://github.com/ai9an/transfigure/releases/latest/download/install.sh | sh
+curl --proto '=https' --tlsv1.2 -fsSL https://raw.githubusercontent.com/ai9an/transfigure/main/install.sh | sh
 ```
 
 The installers detect x64 or ARM64, verify the release checksum, install per-user, and add the managed bin directory to the user PATH. Open a new terminal after the first installation.

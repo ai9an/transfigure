@@ -72,12 +72,11 @@ jobs:
         run: |
           crate_version=$(sed -n 's/^version = "\([^"]*\)"/\1/p' Cargo.toml | head -n 1)
           test "v${crate_version}" = "$GITHUB_REF_NAME"
-          sed "s|__TRANSFIGURE_REPOSITORY__|${GITHUB_REPOSITORY}|g" install.sh > dist/install.sh
-          sed "s|__TRANSFIGURE_REPOSITORY__|${GITHUB_REPOSITORY}|g" install.ps1 > dist/install.ps1
+          cp install.sh dist/install.sh
+          cp install.ps1 dist/install.ps1
           cd dist
           sha256sum transfigure-* > SHA256SUMS
           test "$(find . -maxdepth 1 -name 'transfigure-*' | wc -l)" -eq 4
-          ! grep -R '__TRANSFIGURE_REPOSITORY__' install.sh install.ps1
       - uses: softprops/action-gh-release@v3
         with:
           generate_release_notes: true

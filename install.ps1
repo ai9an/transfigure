@@ -1,4 +1,4 @@
-# GitHub Actions makes this installer repository-specific before publishing it.
+# Transfigure installer for Windows.
 [CmdletBinding()]
 param(
     [string] $Version = $(if ($env:TRANSFIGURE_VERSION) { $env:TRANSFIGURE_VERSION } else { "latest" }),
@@ -7,12 +7,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$Repository = "__TRANSFIGURE_REPOSITORY__"
-$TemplateRepository = "__TRANSFIGURE_" + "REPOSITORY__"
-
-if ($Repository -eq $TemplateRepository) {
-    throw "This is the source installer template. Download install.ps1 from a GitHub Release."
-}
+$Repository = if ($env:TRANSFIGURE_REPOSITORY) { $env:TRANSFIGURE_REPOSITORY } else { "ai9an/transfigure" }
 if (-not [Environment]::Is64BitOperatingSystem) {
     throw "Transfigure requires 64-bit Windows."
 }
