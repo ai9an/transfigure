@@ -31,6 +31,27 @@ jobs:
       - run: sh -n install.sh
       - shell: pwsh
         run: '[scriptblock]::Create((Get-Content -Raw install.ps1)) | Out-Null'
+      - name: Check one-command PowerShell isolation
+        shell: pwsh
+        run: |
+          $Version = "caller-version"
+          $InstallDir = $null
+          $env:TRANSFIGURE_VERSION = "invalid-test-version"
+          $env:TRANSFIGURE_INSTALL_DIR = Join-Path $env:RUNNER_TEMP "transfigure-installer-test"
+          try {
+            $failure = $null
+            try { Get-Content -Raw install.ps1 | Invoke-Expression } catch { $failure = $_ }
+            if ($null -eq $failure) { throw "Installer should reject the test version" }
+            if ($failure.Exception.Message -notlike "Could not determine a valid release version*") {
+              throw $failure
+            }
+            if ($Version -ne "caller-version" -or $null -ne $InstallDir) {
+              throw "Installer leaked variables into the caller scope"
+            }
+          } finally {
+            Remove-Item Env:TRANSFIGURE_VERSION -ErrorAction SilentlyContinue
+            Remove-Item Env:TRANSFIGURE_INSTALL_DIR -ErrorAction SilentlyContinue
+          }
       - name: Check installer defaults
         shell: pwsh
         run: |

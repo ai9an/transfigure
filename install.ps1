@@ -1,4 +1,6 @@
 # Transfigure installer for Windows.
+# Run in a child scope so `irm ... | iex` cannot collide with caller variables.
+& {
 [CmdletBinding()]
 param(
     [string] $Version = $(if ($env:TRANSFIGURE_VERSION) { $env:TRANSFIGURE_VERSION } else { "latest" }),
@@ -7,12 +9,22 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+if ([string]::IsNullOrWhiteSpace($Version)) {
+    $Version = "latest"
+}
+if ([string]::IsNullOrWhiteSpace($InstallDir)) {
+    throw "Could not determine an installation directory. Set TRANSFIGURE_INSTALL_DIR and retry."
+}
 $Repository = if ($env:TRANSFIGURE_REPOSITORY) { $env:TRANSFIGURE_REPOSITORY } else { "ai9an/transfigure" }
 if (-not [Environment]::Is64BitOperatingSystem) {
     throw "Transfigure requires 64-bit Windows."
 }
 
-$Architecture = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString()
+$ArchitectureValue = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture
+if ($null -eq $ArchitectureValue) {
+    throw "Could not determine the Windows CPU architecture."
+}
+$Architecture = [string] $ArchitectureValue
 switch ($Architecture) {
     "X64" { $Target = "x86_64-pc-windows-msvc" }
     "Arm64" { $Target = "aarch64-pc-windows-msvc" }
@@ -22,7 +34,7 @@ switch ($Architecture) {
 if ($Version -eq "latest") {
     $Release = Invoke-RestMethod -Uri "https://api.github.com/repos/$Repository/releases/latest"
     $Tag = $Release.tag_name
-} elseif ($Version.StartsWith("v")) {
+} elseif ($Version -match '^v') {
     $Tag = $Version
 } else {
     $Tag = "v$Version"
@@ -45,8 +57,16 @@ try {
 
     $ChecksumLine = Get-Content $Checksums | Where-Object { $_ -match "\s+$([Regex]::Escape($Asset))$" } | Select-Object -First 1
     if (-not $ChecksumLine) { throw "No checksum found for $Asset." }
-    $Expected = ($ChecksumLine -split '\s+')[0].ToLowerInvariant()
-    $Actual = (Get-FileHash -Algorithm SHA256 -Path $Archive).Hash.ToLowerInvariant()
+    $ChecksumParts = @($ChecksumLine -split '\s+')
+    if ($ChecksumParts.Count -eq 0 -or [string]::IsNullOrWhiteSpace([string] $ChecksumParts[0])) {
+        throw "The checksum entry for $Asset is invalid."
+    }
+    $Expected = ([string] $ChecksumParts[0]).ToLowerInvariant()
+    $ActualHash = Get-FileHash -Algorithm SHA256 -Path $Archive
+    if ($null -eq $ActualHash -or [string]::IsNullOrWhiteSpace([string] $ActualHash.Hash)) {
+        throw "Could not calculate the SHA-256 checksum for $Asset."
+    }
+    $Actual = ([string] $ActualHash.Hash).ToLowerInvariant()
     if ($Expected -ne $Actual) { throw "Checksum verification failed." }
 
     Expand-Archive -Path $Archive -DestinationPath $TempDir -Force
@@ -65,8 +85,9 @@ try {
     $PathChanged = $false
     if (-not $NoModifyPath -and $env:TRANSFIGURE_SKIP_PATH -ne "1") {
         $UserPath = [Environment]::GetEnvironmentVariable("Path", "User")
-        $Entries = @($UserPath -split ';' | Where-Object { $_ })
-        if (-not ($Entries | Where-Object { $_.TrimEnd('\') -ieq $InstallDir.TrimEnd('\') })) {
+        $Entries = @($UserPath -split ';' | Where-Object { -not [string]::IsNullOrWhiteSpace([string] $_) })
+        $NormalizedInstallDir = ([string] $InstallDir).TrimEnd('\')
+        if (-not ($Entries | Where-Object { ([string] $_).TrimEnd('\') -ieq $NormalizedInstallDir })) {
             $NewPath = (@($Entries) + $InstallDir) -join ';'
             [Environment]::SetEnvironmentVariable("Path", $NewPath, "User")
             $PathChanged = $true
@@ -85,4 +106,5 @@ try {
     if (Test-Path -LiteralPath $TempDir) {
         Remove-Item -LiteralPath $TempDir -Recurse -Force
     }
+}
 }
