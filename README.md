@@ -1,60 +1,52 @@
 # Transfigure
 
-Transfigure turns long commands into short commands that still accept arguments. It runs programs directly, so arguments remain separate and predictable across Windows and Linux.
+Transfigure turns long commands into short, reusable commands that still accept arguments. It supports Windows and Linux on x64 and ARM64.
 
 ## Install
 
-Release installers are generated with the correct repository URL when a version tag is published.
+### Windows
 
-PowerShell on Windows:
+Run in PowerShell:
 
 ```powershell
 irm https://raw.githubusercontent.com/ai9an/transfigure/main/install.ps1 | iex
 ```
 
-The text bootstrap downloads the latest Windows release archive, verifies its checksum, and installs it for the current user.
+### Linux
 
-POSIX shell on Linux:
+Run in a POSIX shell:
 
 ```sh
 curl --proto '=https' --tlsv1.2 -fsSL https://raw.githubusercontent.com/ai9an/transfigure/main/install.sh | sh
 ```
 
-The installers detect x64 or ARM64, verify the release checksum, install per-user, and add the managed bin directory to the user PATH. Open a new terminal after the first installation.
-
-To install a particular version or directory, download the installer first and pass its options:
-
-```powershell
-./install.ps1 -Version v0.1.1 -InstallDir C:\Tools\transfigure
-```
-
-```sh
-sh install.sh --version v0.1.1 --install-dir "$HOME/.local/bin"
-```
+The installer downloads the latest release, verifies its SHA-256 checksum, installs it for the current user, and adds Transfigure to PATH. Open a new terminal after installation. Rerun the same command to update.
 
 ## Usage
 
-Create a shortcut by putting its fixed command after `--`:
+Create a shortcut by placing its command after `--`:
 
-```konsole
+```console
 transfigure create download -- yt-dlp -f bestvideo+bestaudio
 download "https://example.com/video"
 ```
 
-Arguments supplied to `download` are appended to the stored command. Transfigure does not invoke a shell, so shell operators such as pipes and redirects are intentionally not interpreted.
+This creates a `download` command. Arguments supplied when calling it are appended to the stored command.
 
-Create a chain with two or more steps:
+## Command chains
 
-```konsole
+Use `--chain` and separate commands with `--then`:
+
+```console
 transfigure create fetch-and-report --chain -- prepare-download --then yt-dlp -f best
 fetch-and-report "https://example.com/video"
 ```
 
-Steps run in order and the chain stops on the first non-zero exit. Invocation arguments are appended only to the final step. Within a chain definition, use `--literal --then` to store `--then` as an ordinary argument.
+Commands run in order and stop at the first failure. Invocation arguments are appended only to the final command. Use `--literal --then` when a command needs the literal argument `--then`.
 
-Manage shortcuts with:
+## Manage shortcuts
 
-```konsole
+```console
 transfigure list
 transfigure show download
 transfigure update download -- yt-dlp -f bv+ba
@@ -63,18 +55,6 @@ transfigure remove download
 transfigure setup
 ```
 
-`setup` recreates missing managed launchers and reports whether the Transfigure bin directory is available in PATH. Configuration can be isolated for development or tests with `TRANSFIGURE_CONFIG_DIR` and `TRANSFIGURE_BIN_DIR`.
+`setup` recreates missing managed launchers and reports whether the Transfigure bin directory is in PATH.
 
-## Development
-
-Install stable Rust, then run:
-
-```konsole
-cargo fmt -- --check
-cargo clippy --all-targets --all-features -- -D warnings
-cargo test --all-targets --all-features
-```
-
-See `AGENTS.md` for repository invariants and contributor guidance.
-
-For the full local testing, GitHub setup, release, and installer-verification procedure, see [DEPLOYMENT.md](DEPLOYMENT.md).
+Transfigure executes programs directly rather than through a shell. Pipes, redirects, shell variables, and other shell expressions are therefore not interpreted.
