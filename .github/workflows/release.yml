@@ -1,0 +1,84 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  linux:
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [x86_64-unknown-linux-musl, aarch64-unknown-linux-musl]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cross
+      - run: cross build --release --locked --target ${{ matrix.target }}
+      - name: Package
+        run: |
+          mkdir dist
+          cp "target/${{ matrix.target }}/release/transfigure" transfigure
+          tar -czf "dist/transfigure-${GITHUB_REF_NAME}-${{ matrix.target }}.tar.gz" transfigure
+      - uses: actions/upload-artifact@v7
+        with:
+          name: release-${{ matrix.target }}
+          path: dist/*
+
+  windows:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-pc-windows-msvc
+            runner: windows-latest
+          - target: aarch64-pc-windows-msvc
+            runner: windows-11-arm
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - run: cargo build --release --locked --target ${{ matrix.target }}
+      - name: Package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path dist | Out-Null
+          Copy-Item "target/${{ matrix.target }}/release/transfigure.exe" transfigure.exe
+          Compress-Archive transfigure.exe "dist/transfigure-${env:GITHUB_REF_NAME}-${{ matrix.target }}.zip"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: release-${{ matrix.target }}
+          path: dist/*
+
+  publish:
+    needs: [linux, windows]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: release-*
+          path: dist
+          merge-multiple: true
+      - name: Validate and prepare release files
+        run: |
+          crate_version=$(sed -n 's/^version = "\([^"]*\)"/\1/p' Cargo.toml | head -n 1)
+          test "v${crate_version}" = "$GITHUB_REF_NAME"
+          sed "s|__TRANSFIGURE_REPOSITORY__|${GITHUB_REPOSITORY}|g" install.sh > dist/install.sh
+          sed "s|__TRANSFIGURE_REPOSITORY__|${GITHUB_REPOSITORY}|g" install.ps1 > dist/install.ps1
+          cd dist
+          sha256sum transfigure-* > SHA256SUMS
+          test "$(find . -maxdepth 1 -name 'transfigure-*' | wc -l)" -eq 4
+          ! grep -R '__TRANSFIGURE_REPOSITORY__' install.sh install.ps1
+      - uses: softprops/action-gh-release@v3
+        with:
+          generate_release_notes: true
+          files: dist/*
