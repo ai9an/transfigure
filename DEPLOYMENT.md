@@ -86,7 +86,7 @@ Replace `<OWNER>` in `README.md` with the GitHub user or organization that will 
 Select-String -Path Cargo.toml -Pattern '^version'
 ```
 
-It is currently `0.1.0`, so the matching tag is `v0.1.0`. Initialize and commit:
+It is currently `0.1.1`, so the matching tag is `v0.1.1`. Initialize and commit:
 
 ```powershell
 git init -b main
@@ -145,21 +145,21 @@ git log -1 --oneline
 git push origin main
 ```
 
-For version `0.1.0`, push its annotated tag:
+For version `0.1.1`, push its annotated tag:
 
 ```powershell
-git tag -a v0.1.0 -m "Transfigure v0.1.0"
-git push origin v0.1.0
+git tag -a v0.1.1 -m "Transfigure v0.1.1"
+git push origin v0.1.1
 ```
 
 The tag must be exactly `v` plus the `Cargo.toml` version. A mismatch intentionally fails the workflow. You do not create or upload the installers manually.
 
 The **Release** workflow should publish seven assets:
 
-- `transfigure-v0.1.0-x86_64-pc-windows-msvc.zip`
-- `transfigure-v0.1.0-aarch64-pc-windows-msvc.zip`
-- `transfigure-v0.1.0-x86_64-unknown-linux-musl.tar.gz`
-- `transfigure-v0.1.0-aarch64-unknown-linux-musl.tar.gz`
+- `transfigure-v0.1.1-x86_64-pc-windows-msvc.zip`
+- `transfigure-v0.1.1-aarch64-pc-windows-msvc.zip`
+- `transfigure-v0.1.1-x86_64-unknown-linux-musl.tar.gz`
+- `transfigure-v0.1.1-aarch64-unknown-linux-musl.tar.gz`
 - `install.ps1`
 - `install.sh`
 - `SHA256SUMS`
@@ -181,7 +181,7 @@ Remove-Item Env:TRANSFIGURE_INSTALL_DIR
 Remove-Item Env:TRANSFIGURE_SKIP_PATH
 ```
 
-Confirm it prints `transfigure 0.1.0`. Then test the real per-user installation:
+Confirm it prints `transfigure 0.1.1`. Then test the real per-user installation:
 
 ```powershell
 irm https://github.com/OWNER/transfigure/releases/latest/download/install.ps1 | iex
@@ -204,7 +204,7 @@ TRANSFIGURE_INSTALL_DIR="$TEST_ROOT/bin" TRANSFIGURE_SKIP_PATH=1 \
 "$TEST_ROOT/bin/transfigure" --version
 ```
 
-Confirm it prints `transfigure 0.1.0`. Then test the normal installation:
+Confirm it prints `transfigure 0.1.1`. Then test the normal installation:
 
 ```sh
 curl --proto '=https' --tlsv1.2 -fsSL \

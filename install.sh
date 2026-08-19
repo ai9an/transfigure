@@ -1,5 +1,5 @@
 #!/bin/sh
-# This template is published with __TRANSFIGURE_REPOSITORY__ replaced by GitHub Actions.
+# GitHub Actions makes this installer repository-specific before publishing it.
 set -eu
 
 REPOSITORY="__TRANSFIGURE_REPOSITORY__"
@@ -39,7 +39,7 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
-if [ "$REPOSITORY" = "__TRANSFIGURE_REPOSITORY__" ]; then
+if [ "$REPOSITORY" = "__TRANSFIGURE_""REPOSITORY__" ]; then
     echo "This is the source installer template. Download install.sh from a GitHub Release." >&2
     exit 1
 fi

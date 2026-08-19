@@ -23,11 +23,11 @@ The installers detect x64 or ARM64, verify the release checksum, install per-use
 To install a particular version or directory, download the installer first and pass its options:
 
 ```powershell
-./install.ps1 -Version v0.1.0 -InstallDir C:\Tools\transfigure
+./install.ps1 -Version v0.1.1 -InstallDir C:\Tools\transfigure
 ```
 
 ```sh
-sh install.sh --version v0.1.0 --install-dir "$HOME/.local/bin"
+sh install.sh --version v0.1.1 --install-dir "$HOME/.local/bin"
 ```
 
 ## Usage
