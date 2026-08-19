@@ -1,9 +1,9 @@
 [package]
 name = "transfigure"
-version = "0.1.1"
+version = "1.0.0"
 edition = "2024"
 rust-version = "1.85"
-description = "Turn long commands into portable, argument-aware shortcuts"
+description = "Turn long commands and repeatable workflows into short commands"
 
 [dependencies]
 clap = { version = "4.5", features = ["derive"] }

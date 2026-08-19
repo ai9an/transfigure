@@ -2,6 +2,8 @@ use std::ffi::OsString;
 
 use clap::{Parser, Subcommand};
 
+use crate::config::ShellKind;
+
 #[derive(Debug, Parser)]
 #[command(
     name = "transfigure",
@@ -25,8 +27,11 @@ pub enum Command {
         /// Interpret `--then` tokens as boundaries between commands.
         #[arg(long)]
         chain: bool,
-        /// Command definition. Place it after `--`.
-        #[arg(last = true, required = true, allow_hyphen_values = true)]
+        /// Run the definition in one persistent shell (`auto`, `powershell`, `pwsh`, or `sh`).
+        #[arg(long, value_enum, num_args = 0..=1, default_missing_value = "auto")]
+        shell: Option<ShellKind>,
+        /// Command definition. `--` is optional but recommended before the command.
+        #[arg(trailing_var_arg = true, required = true, allow_hyphen_values = true)]
         definition: Vec<String>,
     },
     /// Replace an existing shortcut definition.
@@ -34,7 +39,9 @@ pub enum Command {
         name: String,
         #[arg(long)]
         chain: bool,
-        #[arg(last = true, required = true, allow_hyphen_values = true)]
+        #[arg(long, value_enum, num_args = 0..=1, default_missing_value = "auto")]
+        shell: Option<ShellKind>,
+        #[arg(trailing_var_arg = true, required = true, allow_hyphen_values = true)]
         definition: Vec<String>,
     },
     /// List configured shortcuts.

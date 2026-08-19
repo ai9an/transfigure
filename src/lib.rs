@@ -9,7 +9,7 @@ use std::path::PathBuf;
 
 use thiserror::Error;
 
-pub const CONFIG_VERSION: u32 = 1;
+pub const CONFIG_VERSION: u32 = 2;
 pub const APP_NAME: &str = "transfigure";
 
 #[derive(Debug, Error)]
@@ -54,10 +54,11 @@ pub fn execute(cli: cli::Cli) -> Result<RunResult> {
         Command::Create {
             name,
             chain,
+            shell,
             definition,
         } => {
             config::validate_name(&name)?;
-            let shortcut = config::Shortcut::parse(definition, chain)?;
+            let shortcut = config::Shortcut::parse(definition, chain, shell)?;
             let mut store = config::Store::load(&paths.config_file)?;
             if store.find_name(&name).is_some() {
                 return Err(Error::Message(format!(
@@ -78,9 +79,10 @@ pub fn execute(cli: cli::Cli) -> Result<RunResult> {
         Command::Update {
             name,
             chain,
+            shell,
             definition,
         } => {
-            let shortcut = config::Shortcut::parse(definition, chain)?;
+            let shortcut = config::Shortcut::parse(definition, chain, shell)?;
             let mut store = config::Store::load(&paths.config_file)?;
             let stored_name = store
                 .find_name(&name)
@@ -110,6 +112,10 @@ pub fn execute(cli: cli::Cli) -> Result<RunResult> {
                 .find(&name)
                 .ok_or_else(|| Error::Message(format!("shortcut '{name}' does not exist")))?;
             println!("{stored_name}");
+            match shortcut.shell {
+                Some(shell) => println!("  mode: shell ({shell})"),
+                None => println!("  mode: direct"),
+            }
             for (index, command) in shortcut.commands.iter().enumerate() {
                 println!("  {}: {}", index + 1, command.display());
             }
